@@ -3,6 +3,7 @@ import pandas as pd
 from docxtpl import DocxTemplate, RichText, InlineImage
 from matplotlib import pyplot as plt
 import math
+import docx
 import numpy as np
 from matplotlib.table import Table
 from docx.shared import Mm, Inches, Pt
@@ -239,9 +240,28 @@ for key,season in season_group:
     v = ("平均值,百分比%," * (sites_table.shape[1] + 1)).split(',')
     df1 = pd.DataFrame([v[0:-1]], columns=combin.columns,index=["水溶性离子"])
     df1 = df1.append(combin,ignore_index=False)
-    checkerboard_table(df1)
-    plt.savefig(key+'.png')
-    context['season%i_image1' % num1] = InlineImage(tpl, key+'.png', width=Mm(150))
+    # doc2 = docx.Document()
+
+    sd = tpl.new_subdoc()
+    sd.add_paragraph('')
+
+    table = sd.add_table(rows=df1.shape[0]+1, cols=df1.shape[1]+1, style='Table Grid')
+    for i in range(df1.shape[0]):
+        # print(i)
+        table.cell(1+i, 0).text = df1.index[i]
+        for j in range(df1.shape[-1]):
+            # print(j)
+            label = df1.columns[j].split('_')[0]
+            if j == df1.shape[-1]-1:
+                label = "监测站点（全部）"
+            if j%2 == 1:
+                table.cell(0, j).merge(table.cell(0, j+1)).text = label
+            # table.cell(0, j+1).text = label
+            table.cell(i+1 , j+1).text =df1.values[i, j] if isinstance(df1.values[i, j],str) else "%.2f"%df1.values[i, j]
+    # table.cell(0, 1).merge(table.cell(0, 2)).text = table.cell(0, 1).text
+    # checkerboard_table(df1)
+    # plt.savefig(key+'.png')
+    context['season%i_image1' % num1] = sd
     num1 = num1+1
 
 # # print(context)
