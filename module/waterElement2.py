@@ -11,7 +11,7 @@ plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显�
 # plt.rcParams["font.family"]="STSong"  #解决浓度单位显示乱码情况
 plt.rcParams['font.sans-serif'] = ['SimHei']
 df = pd.read_excel(r"淮南市组分数据数据.xlsx", header=0)
-
+tpl = DocxTemplate('水溶性离子模板_1.docx')
 wsin = ['SO4','NO3','Cl','NH4','Na','K','Mg','Ca','季节','站点']
 pm25 = ['SO4','NO3','Cl','NH4','Na','K','Mg','Ca','OC','EC','季节','站点']
 def func1(df):
@@ -155,35 +155,19 @@ def fuc2(ax,labels):
                      arrowprops=dict(arrowstyle="-", connectionstyle="arc3", color="black"), horizontalalignment='left',
                      verticalalignment='bottom')
         num = num + 1
-tpl = DocxTemplate('水溶性离子原件.docx')
-context = {
-    ####标题及第一部分####
-    'season1_title': '',
-    'season1_content1': '',
-    'season1_content2': '',
-    'season1_content3': '',
-    'season1_content4': '',
-    'season1_image1_title': "",
-    'season1_image2_title': "",
-    'season1_image3_title': "",
-    'season1_image4_title': "",
-    'season1_image1': '',
-    'season1_image2': '',
-    'season1_image3': '',
-    'season1_image4': '',
 
-}
 df = df.apply(lambda x: season_date(x),axis=1)
 df.fillna(value=0, inplace=True)
 columns = wsin
 all_sites_table = df[columns].groupby(['季节'],axis=0).mean()
 season_group = df[pm25].groupby(['季节'],axis=0,)
-all_seasons = []
+content_seasons = []
 tz = {}
 num1 = 1
 for key,season in season_group:
-    context['season%i_title'%num1] = key+"PM2.5中水溶性无机离子浓度特征"
-    context["season%i_image1_title"%num1] = "表6.3-2 不同站点水溶性无机离子浓度值及在TWSI中所占百分比单位：μg/m\u00B3"
+    content_season={}
+    content_season['title'] = key+"PM2.5中水溶性无机离子浓度特征"
+    content_season['image_title'] = "表6.3-2 不同站点水溶性无机离子浓度值及在TWSI中所占百分比单位：μg/m\u00B3"
     print(key,season)
     season_pm25 = season.copy(deep=True)
     season = season[wsin]
@@ -199,7 +183,7 @@ for key,season in season_group:
         else:
             tmp = tmp + '、' + str(round(sites_pm25_percent.values[i], 2))+"%"
 
-    context['season%i_content1' % num1] = "%s水溶性离子占PM2.5分别为%s（表6.3-2）。"%('、'.join(sites_pm25_percent.index),tmp)
+    content_season['content'] = "%s水溶性离子占PM2.5分别为%s（表6.3-2）。"%('、'.join(sites_pm25_percent.index),tmp)
 
     season.drop('季节', inplace=True, axis=1)
     sites_table = season.groupby(['站点'],axis=0).mean().T
@@ -207,10 +191,13 @@ for key,season in season_group:
     percent_table = sites_table.apply(lambda x: percent(x), axis=0)
     sites_combin=''
     num2=2
+    content_sites = []
     for k in sites_table.columns:
-        context['season%i_content%i' % (num1,num2)] = "%s最主要的水溶性无机离子NO3\u207B、SO4\u00B2\u207B和NH4+浓度分别为：%.2fμg/m\u00B3、%.2fμg/m\u00B3、%.2fμg/m\u00B3，占TWSI的%.2f%%，%.2f%%，%.2f%%，其余5种水溶性无机离子之和占TWSI的%.2f%%（图6.3-6）。"\
+        content_site = {}
+
+        content_site['content']  = "%s最主要的水溶性无机离子NO3\u207B、SO4\u00B2\u207B和NH4+浓度分别为：%.2fμg/m\u00B3、%.2fμg/m\u00B3、%.2fμg/m\u00B3，占TWSI的%.2f%%，%.2f%%，%.2f%%，其余5种水溶性无机离子之和占TWSI的%.2f%%（图6.3-6）。"\
                                                       %(k,sites_table[k].loc['NO3'],sites_table[k].loc['SO4'],sites_table[k].loc['NH4'],percent_table[k].loc['NO3'],percent_table[k].loc['SO4'],percent_table[k].loc['NH4'],percent_table[k].loc[['Cl','Na','K','Mg','Ca']].sum())
-        context['season%i_image%i_title' % (num1,num2)] = "图6.3-6 %sPM2.5中水溶性无机离子所占的百分比" % k
+        content_site['image_title']  = "图6.3-6 %sPM2.5中水溶性无机离子所占的百分比" % k
 
         combin = pd.merge(sites_table[k],percent_table[k],left_index=True,right_index=True,how='inner')
         if isinstance(sites_combin,str):
@@ -228,10 +215,11 @@ for key,season in season_group:
         # fuc2(ax,labels)
         plt.title(k)
         plt.savefig(key+'_'+k+'.png',pad_inches=0,bbox_inches='tight')
-        context['season%i_image%i' % (num1,num2)] = InlineImage(tpl, key+'_'+k+'.png', width=Mm(60))
+        content_site['image'] = InlineImage(tpl, key+'_'+k+'.png', width=Mm(60))
         num2 = num2 + 1
+        content_sites.append(content_site)
         # plt.show()
-
+    content_season['sites'] = content_sites
     p = 100*all_sites_table.loc[key]/all_sites_table.loc[key].sum()
     total_site = pd.merge(all_sites_table.loc[key].T,p.T,left_index=True,right_index=True,how='inner')
     # combin.columns = combin.columns.sort_values(ascending=True)
@@ -261,9 +249,15 @@ for key,season in season_group:
     # table.cell(0, 1).merge(table.cell(0, 2)).text = table.cell(0, 1).text
     # checkerboard_table(df1)
     # plt.savefig(key+'.png')
-    context['season%i_image1' % num1] = sd
+    content_season['image'] = sd
     num1 = num1+1
+    content_seasons.append(content_season)
 
+
+context = {
+    ####标题及第一部分####
+    'content_seasons': content_seasons,
+}
 # # print(context)
 tpl.render(context)
 tpl.save('水溶性离子.docx')

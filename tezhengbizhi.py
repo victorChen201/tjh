@@ -90,7 +90,7 @@ plt.title("OC/EC")
 plt.savefig(imageOE_name)
 siteOE.sort(reverse=False)
 siteSN.sort(reverse=False)
-tpl = DocxTemplate('特征比值_模板.docx')
+tpl = DocxTemplate('特征值/特征比值_模板.docx')
 context = {
     ####标题及第一部分####
     'city': city,

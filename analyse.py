@@ -49,7 +49,8 @@ def pm2_5(df):
     :return: 返回每行的PM2.5
     '''
     wsin_v = df[wsin].sum() #df['NO3'] + df['SO4'] + df['NH4'] + df['Cl'] + df['Na'] + df['K'] + df['Mg'] + df['Ca']
-    pm2_5 = 100*wsin_v/[(df['OC']*1.5 + df['EC'] + wsin_v)*1.13]
+    y = (df['OC']*1.5 + df['EC'] + wsin_v)*1.13
+    pm2_5 = 100*wsin_v/y
     return pm2_5.round(2)
 
 # df.dropna(axis=1, how='any', thresh=1, subset=None, inplace=True)
