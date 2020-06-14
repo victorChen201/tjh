@@ -14,8 +14,6 @@ def draw_shapefile(df,shapefile_path=r"C:\Users\KLYG\python\citymap\安阳市\An
     for city_rcd in file.shapeRecords():  # 遍历每一条shaperecord
         date1 = df["acq_date"]
         csv_name = city_rcd.record[12] + r"MODIS-24小时" +date1[0].replace("/","_") +"-" + date1[date1.size-1].replace("/","_")
-
-
     lon1 = file.bbox[0]
     lat1 = file.bbox[1]
     lon2 = file.bbox[2]
@@ -82,7 +80,7 @@ if __name__ == '__main__':
     csv_path = cpath + os.sep + "file"
     image_path = cpath + os.sep + "image"
     filenames = os.listdir(path)
-    colunms = ["latitude","longitude","acq_date","acq_time","satellite","confidence"]
+    colunms = ["latitude","longitude","acq_time","satellite","confidence"]
     df = pd.read_csv(csv_path + os.sep +"MODIS_C6_Russia_Asia_24h.csv")[colunms]
     for filename in filenames:
         shapefile_path = path + os.sep + filename
